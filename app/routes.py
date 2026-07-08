@@ -14,9 +14,6 @@ def create_user():
 
     data = request.get_json()
 
-    # print ('___ reived data in backend: ----', data)
-    # username = data.get('username')
-
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
@@ -30,10 +27,6 @@ def create_user():
     user_by_username = User.query.filter_by(username=username).first()
     user_by_email = User.query.filter_by(email=email).first()
 
-    print('--- debug: user by username found? --', user_by_username)
-    print('-- debug: user by email found? ---', user_by_email)
-    
-    #existing_user = User.query.filter((User.username == username) | (User.email == email))
     existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
     if existing_user:
         return jsonify({
@@ -42,8 +35,9 @@ def create_user():
     new_user = User(
         username = username,
         email = email,
-        password_hash = password
     )
+
+    new_user.set_password(password)
 
     try:
         db.session.add(new_user)
@@ -176,6 +170,7 @@ def update_todo(todo_id):
     
 @main_bp.route('/todos/<int:todo_id>', methods=['DELETE'])
 def delete_todo(todo_id):
+
     todo = Todo.query.get(todo_id)
 
     if not todo:
@@ -197,3 +192,15 @@ def delete_todo(todo_id):
         return jsonify({
             "error": "Database error", "details": str(e)
             }), 500
+    
+@main_bp.route('/test-users', methods=['GET'])
+def get_all_users():
+    users = User.query.all()
+    output = []
+    for user in users:
+        output.append({
+            "id": user.id,
+            "username": user.username,
+            "password_in_database": user.password_hash # دیدن چیزی که در دیتابیس ذخیره شده
+        })
+    return jsonify({"users": output}), 200
